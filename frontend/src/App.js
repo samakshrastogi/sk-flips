@@ -1,68 +1,42 @@
-import { useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./auth/auth";
 import Login from "./pages/Login";
-import Upload from "./pages/Upload";
+import Register from "./pages/Register";
+import Videos from "./pages/VideoList";
 import Watch from "./pages/Watch";
-import VideoList from "./pages/VideoList";
+import Upload from "./pages/Upload";
+import Navbar from "./components/Navbar";
 
-function App() {
-  const [selectedVideoId, setSelectedVideoId] = useState(null);
+export default function App() {
+  const { user, loading, isAuthenticated } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="*" element={<Navigate to="/login" />} />
+        </Routes>
+      </BrowserRouter>
+    );
+  }
 
   return (
-    <div style={styles.app}>
-      {/* Header */}
-      <header style={styles.header}>
-        <h1>🎥 sk-flips</h1>
-      </header>
+    <BrowserRouter>
+      <Navbar user={user} />
 
-      {/* Main Content */}
-      <main style={styles.main}>
-        {/* Auth */}
-        <section style={styles.section}>
-          <Login />
-        </section>
-
-        {/* Upload */}
-        <section style={styles.section}>
-          <Upload onUploadSuccess={() => window.location.reload()} />
-        </section>
-
-        {/* Video List */}
-        <section style={styles.section}>
-          <VideoList onSelectVideo={setSelectedVideoId} />
-        </section>
-
-        {/* Watch */}
-        <section style={styles.section}>
-          <Watch videoId={selectedVideoId} />
-        </section>
-      </main>
-    </div>
+      <Routes>
+        <Route path="/" element={<Navigate to="/videos" />} />
+        <Route path="/videos" element={<Videos />} />
+        <Route path="/videos/:id" element={<Watch />} />
+        <Route path="/upload" element={<Upload />} />
+        <Route path="*" element={<Navigate to="/videos" />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
-
-const styles = {
-  app: {
-    fontFamily: "Arial, sans-serif",
-    backgroundColor: "#fafafa",
-    minHeight: "100vh",
-  },
-  header: {
-    backgroundColor: "#111",
-    color: "#fff",
-    padding: "15px 30px",
-  },
-  main: {
-    maxWidth: "1000px",
-    margin: "auto",
-    padding: "20px",
-  },
-  section: {
-    marginBottom: "40px",
-    padding: "20px",
-    backgroundColor: "#fff",
-    borderRadius: "6px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-  },
-};
-
-export default App;

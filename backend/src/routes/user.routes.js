@@ -4,20 +4,16 @@ import {
     loginUser,
     getUsers,
     getMe,
+    logoutUser,
 } from "../controllers/user.controller.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
-console.log("🔥 user.routes.js LOADED");
 
 const router = express.Router();
 
-// auth
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post("/logout", logoutUser);
 
-// protected
-router.get("/me", authMiddleware, getMe);
-
-// public
+router.get("/me", getMe);
 router.get("/", getUsers);
 
 export default router;

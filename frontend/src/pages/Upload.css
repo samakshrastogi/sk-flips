@@ -1,0 +1,34 @@
+.upload-page {
+  padding: 24px;
+  max-width: 420px;
+}
+
+.upload-title {
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+.upload-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.upload-button {
+  width: 100%;
+  padding: 10px;
+  background: #4caf50;
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.upload-button:disabled {
+  background: #9e9e9e;
+  cursor: not-allowed;
+}

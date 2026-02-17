@@ -1,43 +1,47 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/api";
-import { useAuth } from "../auth/auth";
 
-export default function Login() {
+export default function Register() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    const { refreshAuth } = useAuth();
 
-    const handleLogin = async () => {
+    const handleRegister = async () => {
         if (!email || !password) return;
 
         try {
             setLoading(true);
-            await api.post("/users/login", { email, password });
-            await refreshAuth();
-            navigate("/videos", { replace: true });
+            await api.post("/users/register", { email, password });
+            navigate("/login");
         } catch {
-            alert("Invalid credentials");
+            alert("Registration failed");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="login-page">
-            <h2>Login</h2>
+        <div>
+            <h2>Register</h2>
 
-            <input value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+            />
+
             <input
                 type="password"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
             />
 
-            <button onClick={handleLogin} disabled={loading}>
-                {loading ? "Logging in..." : "Login"}
+            <button onClick={handleRegister} disabled={loading}>
+                {loading ? "Creating account..." : "Register"}
             </button>
         </div>
     );

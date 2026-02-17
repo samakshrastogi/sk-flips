@@ -1,54 +1,53 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api/api";
+import "./VideoList.css";
 
-export default function VideoList({ onSelectVideo }) {
-    const [videos, setVideos] = useState([]);
+export default function VideoList() {
+    const [media, setMedia] = useState([]);
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchVideos = async () => {
-            try {
-                const res = await api.get("/videos");
-                setVideos(res.data.videos);
-            } catch (err) {
-                console.error("Failed to load videos");
-            } finally {
+        api.get("/videos")
+            .then((res) => {
+                setMedia(res.data.media || []);
+            })
+            .finally(() => {
                 setLoading(false);
-            }
-        };
-
-        fetchVideos();
+            });
     }, []);
 
     if (loading) {
-        return <p>Loading videos...</p>;
+        return <div className="videos-loading">Loading</div>;
     }
 
-    if (videos.length === 0) {
-        return <p>No videos uploaded yet.</p>;
+    if (media.length === 0) {
+        return <div className="videos-empty">No videos found</div>;
     }
 
     return (
-        <div>
-            <h2>📺 Videos</h2>
+        <div className="videos-page">
+            <h2 className="videos-title">Videos</h2>
 
-            <div style={styles.grid}>
-                {videos.map((video) => (
+            <div className="videos-grid">
+                {media.map((item) => (
                     <div
-                        key={video.id}
-                        style={styles.card}
-                        onClick={() => onSelectVideo(video.id)}
+                        key={item.id}
+                        className="video-card"
+                        onClick={() => navigate(`/videos/${item.id}`, { state: item })}
                     >
-                        {/* Thumbnail placeholder */}
-                        <div style={styles.thumbnail}>
+                        <div className="video-preview">
                             ▶
                         </div>
 
-                        <div style={styles.info}>
-                            <strong>{video.title}</strong>
-                            <p style={styles.date}>
-                                {new Date(video.createdAt).toLocaleDateString()}
-                            </p>
+                        <div className="video-info">
+                            <div className="video-title">
+                                {item.title}
+                            </div>
+                            <div className="video-channel">
+                                {item.channelName}
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -56,35 +55,3 @@ export default function VideoList({ onSelectVideo }) {
         </div>
     );
 }
-
-const styles = {
-    grid: {
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-        gap: "20px",
-    },
-    card: {
-        border: "1px solid #e5e5e5",
-        borderRadius: "6px",
-        overflow: "hidden",
-        cursor: "pointer",
-        transition: "transform 0.2s ease, box-shadow 0.2s ease",
-    },
-    thumbnail: {
-        height: "120px",
-        backgroundColor: "#000",
-        color: "#fff",
-        fontSize: "32px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    info: {
-        padding: "10px",
-    },
-    date: {
-        fontSize: "12px",
-        color: "#666",
-        marginTop: "5px",
-    },
-};

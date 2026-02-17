@@ -1,102 +1,88 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api/api";
+import "./Upload.css";
 
-export default function Upload({ onUploadSuccess }) {
-    const [video, setVideo] = useState(null);
+export default function Upload() {
+    const [file, setFile] = useState(null);
     const [title, setTitle] = useState("");
+    const [channelName, setChannelName] = useState("");
+    const [mediaType, setMediaType] = useState("video");
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
+    const navigate = useNavigate();
 
     const upload = async () => {
-        if (!video) {
-            alert("Please select a video file");
-            return;
-        }
-
-        if (!title.trim()) {
-            alert("Please enter a title");
+        if (!file || !channelName.trim()) {
             return;
         }
 
         const formData = new FormData();
-        formData.append("video", video);
+        formData.append("file", file);
         formData.append("title", title);
+        formData.append("channelName", channelName);
+        formData.append("mediaType", mediaType);
 
         try {
             setUploading(true);
 
             await api.post("/videos/upload", formData, {
                 onUploadProgress: (e) => {
-                    const percent = Math.round((e.loaded * 100) / e.total);
-                    setProgress(percent);
+                    if (e.total) {
+                        setProgress(Math.round((e.loaded * 100) / e.total));
+                    }
                 },
             });
 
-            alert("Video uploaded successfully!");
-
-            // reset form
-            setVideo(null);
-            setTitle("");
-            setProgress(0);
-
-            if (onUploadSuccess) onUploadSuccess();
-        } catch (error) {
-            alert("Upload failed");
-            console.error(error);
+            navigate("/videos");
         } finally {
             setUploading(false);
         }
     };
 
     return (
-        <div>
-            <h2>⬆ Upload Video</h2>
+        <div className="upload-page">
+            <h2 className="upload-title">Upload</h2>
 
-            <div style={styles.form}>
-                <input
-                    type="text"
-                    placeholder="Video title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                />
+            <input
+                className="upload-input"
+                type="text"
+                placeholder="Channel name"
+                value={channelName}
+                onChange={(e) => setChannelName(e.target.value)}
+            />
 
-                <input
-                    type="file"
-                    accept="video/*"
-                    onChange={(e) => setVideo(e.target.files[0])}
-                />
+            <input
+                className="upload-input"
+                type="text"
+                placeholder="Title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+            />
 
-                <button onClick={upload} disabled={uploading}>
-                    {uploading ? "Uploading..." : "Upload"}
-                </button>
+            <select
+                className="upload-input"
+                value={mediaType}
+                onChange={(e) => setMediaType(e.target.value)}
+            >
+                <option value="video">Video</option>
+                <option value="icon">Icon</option>
+            </select>
 
-                {uploading && (
-                    <div style={styles.progressWrapper}>
-                        <div style={{ ...styles.progressBar, width: `${progress}%` }} />
-                    </div>
-                )}
-            </div>
+            <input
+                className="upload-input"
+                type="file"
+                accept={mediaType === "video" ? "video/*" : "image/*"}
+                onChange={(e) => setFile(e.target.files[0])}
+            />
+
+            <button
+                className="upload-button"
+                onClick={upload}
+                disabled={uploading}
+            >
+                {uploading ? `${progress}%` : "Upload"}
+            </button>
         </div>
     );
 }
-
-const styles = {
-    form: {
-        display: "flex",
-        flexDirection: "column",
-        gap: "10px",
-        maxWidth: "400px",
-    },
-    progressWrapper: {
-        width: "100%",
-        height: "8px",
-        backgroundColor: "#eee",
-        borderRadius: "4px",
-        overflow: "hidden",
-    },
-    progressBar: {
-        height: "100%",
-        backgroundColor: "#4caf50",
-        transition: "width 0.2s ease",
-    },
-};

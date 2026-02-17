@@ -2,18 +2,12 @@ import prisma from "../utils/prisma.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-/**
- * Register user
- */
 export const registerUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: "Email and password are required",
-            });
+            return res.status(400).json({ success: false });
         }
 
         const existingUser = await prisma.user.findUnique({
@@ -21,10 +15,7 @@ export const registerUser = async (req, res) => {
         });
 
         if (existingUser) {
-            return res.status(409).json({
-                success: false,
-                message: "User already exists",
-            });
+            return res.status(409).json({ success: false });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -36,31 +27,18 @@ export const registerUser = async (req, res) => {
             },
         });
 
-        return res.status(201).json({
-            success: true,
-            message: "User registered successfully",
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-            success: false,
-            message: "Server error",
-        });
+        return res.status(201).json({ success: true });
+    } catch {
+        return res.status(500).json({ success: false });
     }
 };
 
-/**
- * Login user
- */
 export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: "Email and password are required",
-            });
+            return res.status(400).json({ success: false });
         }
 
         const user = await prisma.user.findUnique({
@@ -68,19 +46,13 @@ export const loginUser = async (req, res) => {
         });
 
         if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid credentials",
-            });
+            return res.status(401).json({ success: false });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid credentials",
-            });
+            return res.status(401).json({ success: false });
         }
 
         const token = jwt.sign(
@@ -89,22 +61,52 @@ export const loginUser = async (req, res) => {
             { expiresIn: "7d" }
         );
 
-        return res.json({
-            success: true,
-            token,
+        res.cookie("auth", token, {
+            httpOnly: true,
+            sameSite: "lax",
+            secure: false,
         });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-            success: false,
-            message: "Server error",
-        });
+
+        return res.json({ success: true });
+    } catch {
+        return res.status(500).json({ success: false });
     }
 };
 
-/**
- * Get all users (public for now)
- */
+export const logoutUser = async (req, res) => {
+    res.clearCookie("auth");
+    return res.json({ success: true });
+};
+
+export const getMe = async (req, res) => {
+    try {
+        const token = req.cookies.auth;
+
+        if (!token) {
+            return res.status(401).json({ success: false });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.userId },
+            select: {
+                id: true,
+                email: true,
+                createdAt: true,
+            },
+        });
+
+        if (!user) {
+            return res.status(401).json({ success: false });
+        }
+
+        return res.json({ success: true, user });
+    } catch {
+        return res.status(401).json({ success: false });
+    }
+};
+
 export const getUsers = async (req, res) => {
     try {
         const users = await prisma.user.findMany({
@@ -115,48 +117,8 @@ export const getUsers = async (req, res) => {
             },
         });
 
-        return res.json({
-            success: true,
-            users,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Server error",
-        });
-    }
-};
-/**
- * Get current logged-in user
- */
-export const getMe = async (req, res) => {
-    try {
-        const userId = req.user.userId;
-
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            select: {
-                id: true,
-                email: true,
-                createdAt: true,
-            },
-        });
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found",
-            });
-        }
-
-        return res.json({
-            success: true,
-            user,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Server error",
-        });
+        return res.json({ success: true, users });
+    } catch {
+        return res.status(500).json({ success: false });
     }
 };
